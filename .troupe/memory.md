@@ -20,6 +20,19 @@ dashboards.
 
 ## Notes
 
+- 2026-09-20 plan-1: 2026-09-20 plan-1 (CORRECTION to the --unstable-kv note,
+  from the live Coolify deploy): the `--unstable-kv` requirement is
+  VERSION-SPECIFIC and must NOT be baked into the deployed start command. The
+  nixpacks/Coolify image runs a Deno that REJECTS `--unstable-kv`
+  (`error: unexpected argument '--unstable-kv' found … similar argument exists: '--unstable'`)
+  and has `Deno.openKv` stable with no flag — i.e. newest Deno 2.9.7+. The local
+  sandbox happens to be the transitional 2.9.6 build which still needs
+  `--unstable-kv`. Resolution baked into the repo: both deno.json `dev` and
+  `start` tasks are flag-free (no --unstable-kv), and main.ts starts with a
+  guard that prints a clear, actionable message and Deno.exit(1) if
+  `typeof Deno.openKv !== "function"` (covering 2.9.6 / very old --unstable
+  builds). README documents the override for Coolify's Start Command if a server
+  Deno genuinely needs the flag.
 - 2026-09-20 plan-1: 2026-09-20 plan-1 (verified while implementing): in the
   Deno 2.9.x builds this app targets, Deno.openKv is gated behind the
   `--unstable-kv` flag — `typeof Deno.openKv` is `undefined` without it and
@@ -59,10 +72,3 @@ dashboards.
   self-hosted (VPS/laptop).
 - 2026-09-20 plan-1: Version gotcha: there is no "htmx 5" — the newest htmx.org
   is 2.0.10 (current major is 2.x), and newest Deno is v2.9.7 (installed via
-  curl -fsSL https://deno.land/install.sh | sh). User asked for "new htmx 5", so
-  plan uses htmx 2.0.10 as the newest and flags this in the README. Run with
-  `deno run --watch --env-file=.env -A main.ts`; secrets generated with a
-  `deno task generate-tokens` script using crypto.getRandomValues. Deno Deploy
-  caveat: Deno.openKv local file persistence does not exist there, so a hosted
-  deploy would need a different store; this app is intended to be self-hosted
-  (VPS/laptop).

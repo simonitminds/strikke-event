@@ -10,6 +10,20 @@
 //
 // Anything unauthenticated answers 404, as if the route didn't exist.
 
+// Deno.openKv availability differs between builds: newer Deno (2.9.7+) has it
+// stable with no flag; some builds (e.g. 2.9.6) hide it behind --unstable-kv;
+// very old builds behind --unstable. Fail fast and clearly instead of 500ing
+// on every request.
+if (typeof Deno.openKv !== "function") {
+  console.error(
+    "strikke-event: Deno.openKv is not available in this Deno build.\n" +
+      "  - Deno 2.9.7+  -> should work as-is (no flag needed).\n" +
+      "  - Deno 2.9.6   -> run with:  deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts\n" +
+      "  - very old     -> try --unstable instead.",
+  );
+  Deno.exit(1);
+}
+
 import {
   isAdminNonce,
   isSignupNonce,

@@ -78,9 +78,14 @@ injects environment variables directly into the container.
    KV_PATH=/data/app.kv
    ```
 6. **Deploy.** The container then starts with:
-   `deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts`
-   (`--unstable-kv` is needed because `Deno.openKv` is still a gated feature in
-   the Deno 2.9.x builds this targets).
+   `deno run --allow-net --allow-read --allow-write --allow-env main.ts`
+
+   No `--unstable-kv` here on purpose: newer Deno (2.9.7+) has `Deno.openKv`
+   stable and **rejects** the `--unstable-kv` flag (that's the
+   `unexpected argument '--unstable-kv' found` error). If your server's Deno
+   genuinely needs a flag (e.g. the transitional 2.9.6 build), override the
+   **Start Command** in Coolify with `--unstable-kv` added — see the gotchas
+   below.
 
 Coolify usually terminates HTTPS in front of the app; the session cookie does
 not set `Secure` by default so it keeps working on plain `http://` during local
@@ -105,12 +110,13 @@ development too.
   exactly.
 - No remote Deno imports at all — only Deno's built-ins — so the container build
   is trivial (`deno cache` has almost nothing to do).
+- **`Deno.openKv` flag differs by Deno build.** 2.9.7+ has it stable (no flag,
+  and it _rejects_ `--unstable-kv`); the transitional 2.9.6 build needs
+  `--unstable-kv`; very old builds use `--unstable`. The tasks are written
+  flag-free for the latest Deno, and `main.ts` fails fast with this exact advice
+  if a build hides `Deno.openKv` behind a flag. Add `--unstable-kv` to the
+  Coolify **Start Command** only if your server's Deno demands it.
 - Unauthenticated requests answer `404`, so the service looks empty from
   outside.
 - This is a throwaway app: no email sending, no password resets — nice and
   simple ✂
-# strikke-event
-# strikke-event
-# strikke-event
-# strikke-event
-# strikke-event
