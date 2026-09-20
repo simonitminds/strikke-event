@@ -78,9 +78,10 @@ the container.
    ```
    KV_PATH=/data/app.kv
    ```
-6. **Deploy.** Nothing else to configure — `nixpacks.toml` downloads **Deno
-   v2.9.7** into `.runtime/` during the build (so the exact version we develop
-   against is what runs) and the container starts with:
+6. **Deploy.** Nothing else to configure — the build runs
+   `scripts/install-deno.sh`, which downloads **Deno v2.9.7** into `.runtime/`
+   (so the exact version we develop against is what runs) and the container
+   starts with:
    `./.runtime/deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts`
 
    `--unstable-kv` is required: `Deno.openKv` is gated behind it on the 2.9.x
@@ -105,6 +106,7 @@ development too.
 | `tokens.ts`     | `deno task generate-tokens`               |
 | `deno.json`     | Tasks (`dev`, `start`, `generate-tokens`) |
 | `nixpacks.toml` | Pins the Deno provider for Nixpacks       |
+| `scripts/install-deno.sh` | Downloads the pinned Deno at build time |
 
 ## Decisions & gotchas
 
