@@ -1,0 +1,3 @@
+# Pin the Deno provider so Coolify/Nixpacks always uses it.
+# The start command is picked up automatically from deno.json -> tasks.start.
+providers = ["deno"]

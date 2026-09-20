@@ -1,0 +1,7 @@
+{
+  "tasks": {
+    "dev": "deno run --watch --env-file=.env -A --unstable-kv main.ts",
+    "start": "deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts",
+    "generate-tokens": "deno run -A tokens.ts"
+  }
+}
