@@ -53,10 +53,11 @@ Registrations are written to `data/app.kv` (override with `KV_PATH`).
 
 ## Deploy on Coolify with Nixpacks
 
-Nixpacks detects Deno because this repo has a `deno.json` (and `nixpacks.toml`
-pins the provider). The start command is taken verbatim from `deno.json` →
-`tasks.start` and deliberately does **not** use `--env-file`, because Coolify
-injects environment variables directly into the container.
+Nixpacks detects Deno because this repo has a `deno.json`. The build and start
+are controlled by `nixpacks.toml`: it pins a specific Deno version (v2.9.7,
+downloaded into `.runtime/` at build time) and starts the app with it. Nothing
+uses `--env-file`, because Coolify injects environment variables directly into
+the container.
 
 1. Push this repository to GitHub / GitLab / Gitea.
 2. In Coolify: **New resource** → pick the repository.
@@ -77,15 +78,17 @@ injects environment variables directly into the container.
    ```
    KV_PATH=/data/app.kv
    ```
-6. **Deploy.** The container then starts with:
-   `deno run --allow-net --allow-read --allow-write --allow-env main.ts`
+6. **Deploy.** Nothing else to configure — `nixpacks.toml` downloads **Deno
+   v2.9.7** into `.runtime/` during the build (so the exact version we develop
+   against is what runs) and the container starts with:
+   `./.runtime/deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts`
 
-   No `--unstable-kv` here on purpose: newer Deno (2.9.7+) has `Deno.openKv`
-   stable and **rejects** the `--unstable-kv` flag (that's the
-   `unexpected argument '--unstable-kv' found` error). If your server's Deno
-   genuinely needs a flag (e.g. the transitional 2.9.6 build), override the
-   **Start Command** in Coolify with `--unstable-kv` added — see the gotchas
-   below.
+   `--unstable-kv` is required: `Deno.openKv` is gated behind it on the 2.9.x
+   builds we run (verified on 2.9.6 and 2.9.7; no flag → `Deno.openKv` is
+   `undefined`, and `--unstable` does nothing on 2.0+). Pinning the version is
+   the important part — Nixpacks' own `deno` package is _unpinned_ and its build
+   may not expose `Deno.openKv` at all, which shows up in the logs as
+   `Deno.openKv is not available in this Deno build`.
 
 Coolify usually terminates HTTPS in front of the app; the session cookie does
 not set `Secure` by default so it keeps working on plain `http://` during local
@@ -110,12 +113,12 @@ development too.
   exactly.
 - No remote Deno imports at all — only Deno's built-ins — so the container build
   is trivial (`deno cache` has almost nothing to do).
-- **`Deno.openKv` flag differs by Deno build.** 2.9.7+ has it stable (no flag,
-  and it _rejects_ `--unstable-kv`); the transitional 2.9.6 build needs
-  `--unstable-kv`; very old builds use `--unstable`. The tasks are written
-  flag-free for the latest Deno, and `main.ts` fails fast with this exact advice
-  if a build hides `Deno.openKv` behind a flag. Add `--unstable-kv` to the
-  Coolify **Start Command** only if your server's Deno demands it.
+- **Deno version is pinned on deploy.** `Deno.openKv` needs `--unstable-kv` on
+  the 2.9.x builds we target (verified on 2.9.6 and 2.9.7); without it
+  `Deno.openKv` is `undefined`, and `--unstable` does nothing on Deno 2.0+.
+  Because Nixpacks' nixpkgs `deno` is unpinned (and may not expose `Deno.openKv`
+  at all), `nixpacks.toml` downloads the exact **Deno v2.9.7** at build time
+  into `.runtime/` and starts the server with it.
 - Unauthenticated requests answer `404`, so the service looks empty from
   outside.
 - This is a throwaway app: no email sending, no password resets — nice and

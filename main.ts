@@ -10,16 +10,15 @@
 //
 // Anything unauthenticated answers 404, as if the route didn't exist.
 
-// Deno.openKv availability differs between builds: newer Deno (2.9.7+) has it
-// stable with no flag; some builds (e.g. 2.9.6) hide it behind --unstable-kv;
-// very old builds behind --unstable. Fail fast and clearly instead of 500ing
-// on every request.
+// Deno.openKv needs the --unstable-kv flag on the Deno 2.9.x builds we target
+// (verified on 2.9.6 and 2.9.7). If a build hides or lacks it we fail fast and
+// clearly instead of 500ing on every request. The Nixpacks deploy pins Deno
+// v2.9.7 (see nixpacks.toml) and runs with --unstable-kv.
 if (typeof Deno.openKv !== "function") {
   console.error(
     "strikke-event: Deno.openKv is not available in this Deno build.\n" +
-      "  - Deno 2.9.7+  -> should work as-is (no flag needed).\n" +
-      "  - Deno 2.9.6   -> run with:  deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts\n" +
-      "  - very old     -> try --unstable instead.",
+      "  Run with a Deno 2.9.x build and its KV flag, e.g.:\n" +
+      "    deno run --unstable-kv --allow-net --allow-read --allow-write --allow-env main.ts",
   );
   Deno.exit(1);
 }
